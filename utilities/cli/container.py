@@ -23,24 +23,27 @@ import stat
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from .util import (
+    DEFAULT_BASE_SDK_VERSION,
     build_holohub_path_mapping,
     check_nvidia_ctk,
     docker_args_to_devcontainer_format,
     fatal,
     find_hsdk_build_rel_dir,
     get_compute_capacity,
+    get_cuda_tag,
+    get_default_cuda_version,
     get_group_id,
+    get_holohub_root,
+    get_holohub_setup_scripts_dir,
     get_host_gpu,
     get_image_pythonpath,
     list_normalized_languages,
     replace_placeholders,
     run_command,
 )
-
-base_sdk_version = "3.5.0"
 
 
 class HoloHubContainer:
@@ -53,20 +56,56 @@ class HoloHubContainer:
     Default attributes may be overridden by a project-specific implementation.
     """
 
-    CONTAINER_PREFIX = "holohub"
-    HOLOHUB_ROOT = Path(__file__).parent.parent.parent
+    HOLOHUB_ROOT = get_holohub_root()  # Repository root directory
+    # Primary repository prefix - sets defaults for container, workspace, and hostname
+    REPO_PREFIX = os.environ.get("HOLOHUB_REPO_PREFIX", "holohub")
+    CONTAINER_PREFIX = os.environ.get("HOLOHUB_CONTAINER_PREFIX", REPO_PREFIX)
+    WORKSPACE_NAME = os.environ.get("HOLOHUB_WORKSPACE_NAME", REPO_PREFIX)
+    HOSTNAME_PREFIX = os.environ.get("HOLOHUB_HOSTNAME_PREFIX", REPO_PREFIX.replace("_", "-"))
+
+    # Docker and runtime configuration
+    DOCKER_EXE = os.environ.get("HOLOHUB_DOCKER_EXE", "docker")  # Docker executable
+
+    # SDK and path configuration
+    SDK_PATH = os.environ.get("HOLOHUB_SDK_PATH", "/opt/nvidia/holoscan")
+    BASE_SDK_VERSION = os.environ.get("HOLOHUB_BASE_SDK_VERSION", DEFAULT_BASE_SDK_VERSION)
+    BENCHMARKING_SUBDIR = os.environ.get(
+        "HOLOHUB_BENCHMARKING_SUBDIR", "benchmarks/holoscan_flow_benchmarking"
+    )
+    DEFAULT_DOCKERFILE = os.environ.get("HOLOHUB_DEFAULT_DOCKERFILE", HOLOHUB_ROOT / "Dockerfile")
+
+    # Image naming format templates
+    BASE_IMAGE_NAME = os.environ.get("HOLOHUB_BASE_IMAGE", "nvcr.io/nvidia/clara-holoscan/holoscan")
+    BASE_IMAGE_FORMAT = os.environ.get(
+        "HOLOHUB_BASE_IMAGE_FORMAT", "{base_image}:v{sdk_version}-{cuda_tag}"
+    )
+    DEFAULT_IMAGE_FORMAT = os.environ.get(
+        "HOLOHUB_DEFAULT_IMAGE_FORMAT", "{container_prefix}:ngc-v{sdk_version}-{cuda_tag}"
+    )
+    # Additional Default build arguments for docker build command (e.g., --build-context flags)
+    DEFAULT_DOCKER_BUILD_ARGS = os.environ.get("HOLOHUB_DEFAULT_DOCKER_BUILD_ARGS", "")
+    # Additional Default run arguments for docker run command
+    DEFAULT_DOCKER_RUN_ARGS = os.environ.get("HOLOHUB_DEFAULT_DOCKER_RUN_ARGS", "")
 
     @classmethod
-    def default_base_image(cls) -> str:
-        return f"nvcr.io/nvidia/clara-holoscan/holoscan:v{base_sdk_version}-{get_host_gpu()}"
+    def default_base_image(cls, cuda_version: Optional[Union[str, int]] = None) -> str:
+        return cls.BASE_IMAGE_FORMAT.format(
+            base_image=cls.BASE_IMAGE_NAME,
+            sdk_version=cls.BASE_SDK_VERSION,
+            cuda_tag=get_cuda_tag(cuda_version, cls.BASE_SDK_VERSION),
+        )
 
     @classmethod
-    def default_image(cls) -> str:
-        return f"{cls.CONTAINER_PREFIX}:ngc-v{base_sdk_version}-{get_host_gpu()}"
+    def default_image(cls, cuda_version: Optional[Union[str, int]] = None) -> str:
+        return cls.DEFAULT_IMAGE_FORMAT.format(
+            container_prefix=cls.CONTAINER_PREFIX,
+            sdk_version=cls.BASE_SDK_VERSION,
+            cuda_tag=get_cuda_tag(cuda_version, cls.BASE_SDK_VERSION),
+        )
 
-    @staticmethod
-    def default_dockerfile() -> Path:
-        return HoloHubContainer.HOLOHUB_ROOT / "Dockerfile"
+    @classmethod
+    def default_dockerfile(cls) -> Path:
+        return cls.DEFAULT_DOCKERFILE
 
     @staticmethod
     def get_build_argparse() -> argparse.ArgumentParser:
@@ -83,9 +122,21 @@ class HoloHubContainer:
             help="(Build container) Do not use cache when building the image",
         )
         parser.add_argument(
+            "--cuda",
+            type=str,
+            help="(Build container) CUDA version (e.g., 12, 13). Default: 12",
+        )
+        parser.add_argument(
             "--build-args",
             help="(Build container) Extra arguments to docker build command, "
             "example: `--build-args '--network=host --build-arg \"CUSTOM=value with spaces\"'`",
+        )
+        parser.add_argument(
+            "--extra-scripts",
+            action="append",
+            help="(Build container) Named dependency installation scripts to run as Docker layers."
+            + "Searches in the directory path specified by the HOLOHUB_SETUP_SCRIPTS_DIR environment variable."
+            + "Use `./holohub setup --list-scripts` to list all available scripts.",
         )
         return parser
 
@@ -272,7 +323,7 @@ class HoloHubContainer:
     def image_name(self) -> str:
         if self.dockerfile_path != HoloHubContainer.default_dockerfile():
             return f"{self.CONTAINER_PREFIX}:{self.project_metadata.get('project_name', '')}"
-        return HoloHubContainer.default_image()
+        return HoloHubContainer.default_image(self.cuda_version)
 
     @property
     def dockerfile_path(self) -> Path:
@@ -321,18 +372,13 @@ class HoloHubContainer:
         elif not isinstance(project_metadata, dict):
             print("No project provided, proceeding with default container")
 
-        # Environment defaults
-        self.holoscan_py_exe = os.environ.get("HOLOSCAN_PY_EXE", "python3")
-        self.holoscan_docker_exe = os.environ.get("HOLOSCAN_DOCKER_EXE", "docker")
-        self.holoscan_sdk_version = os.environ.get("HOLOSCAN_SDK_VERSION", "sdk-latest")
-        self.holohub_container_base_name = os.environ.get("HOLOHUB_CONTAINER_BASE_NAME", "holohub")
-
         self.project_metadata = project_metadata
         # Get first language from project metadata if not provided.
         if language is None and self.project_metadata:
             language = self.project_metadata.get("metadata", {}).get("language", "")
         self.language = list_normalized_languages(language)[0]
 
+        self.cuda_version = None  # None means use default from get_cuda_tag
         self.dryrun = False
         self.verbose = False
 
@@ -343,20 +389,38 @@ class HoloHubContainer:
         img: Optional[str] = None,
         no_cache: bool = False,
         build_args: Optional[str] = None,
+        extra_scripts: Optional[List[str]] = None,
+        cuda_version: Optional[Union[str, int]] = None,
     ) -> None:
-        """Build the container image"""
+        """
+        Build the container image according to the procedure:
+
+        1. Build the Dockerfile provided environment with the given BASE_IMAGE and given tag.
+            If extra_scripts are provided, also tag this image as {img}-base.
+        2. If extra_scripts are provided, build an additional Docker layer for each script.
+            Tag each iterative layer as {img}-{script} and {img}.
+
+        Result: Docker image named {img} based on the Dockerfile and any additional scripts.
+        """
+
+        if cuda_version is not None:
+            self.cuda_version = cuda_version
 
         # Get Dockerfile path
         docker_file_path = docker_file or self.dockerfile_path
-        base_img = base_img or self.default_base_image()
+        base_img = base_img or self.default_base_image(self.cuda_version)
         img = img or self.image_name
         gpu_type = get_host_gpu()
         compute_capacity = get_compute_capacity()
 
+        cuda_major = (
+            self.cuda_version if self.cuda_version is not None else get_default_cuda_version()
+        )
+
         # Check if buildx exists
         if not self.dryrun:
             try:
-                run_command(["docker", "buildx", "version"], check=True, capture_output=True)
+                run_command([self.DOCKER_EXE, "buildx", "version"], check=True, capture_output=True)
             except subprocess.CalledProcessError:
                 fatal(
                     "docker buildx plugin is missing. Please install docker-buildx-plugin:\n"
@@ -367,7 +431,7 @@ class HoloHubContainer:
         os.environ["DOCKER_BUILDKIT"] = "1"
 
         cmd = [
-            "docker",
+            self.DOCKER_EXE,
             "build",
             "--build-arg",
             "BUILDKIT_INLINE_CACHE=1",
@@ -376,21 +440,67 @@ class HoloHubContainer:
             "--build-arg",
             f"GPU_TYPE={gpu_type}",
             "--build-arg",
-            f"BASE_SDK_VERSION={base_sdk_version}",
+            f"BASE_SDK_VERSION={self.BASE_SDK_VERSION}",
             "--build-arg",
             f"COMPUTE_CAPACITY={compute_capacity}",
+            "--build-arg",
+            f"CUDA_MAJOR={cuda_major}",
             "--network=host",
         ]
 
         if no_cache:
             cmd.append("--no-cache")
 
-        if build_args:
-            cmd.extend(shlex.split(build_args))
+        full_build_args = " ".join(
+            filter(None, [HoloHubContainer.DEFAULT_DOCKER_BUILD_ARGS, build_args])
+        )
+        if full_build_args:
+            cmd.extend(shlex.split(full_build_args))
 
-        cmd.extend(["-f", str(docker_file_path), "-t", img, str(HoloHubContainer.HOLOHUB_ROOT)])
+        cmd.extend(
+            [
+                "-f",
+                str(docker_file_path),
+                "-t",
+                img,
+                *(["-t", f"{img}-base"] if extra_scripts else []),
+                str(HoloHubContainer.HOLOHUB_ROOT),
+            ]
+        )
 
         run_command(cmd, dry_run=self.dryrun)
+
+        if extra_scripts:
+            for script in extra_scripts:
+                script_path = get_holohub_setup_scripts_dir() / f"{script}.sh"
+                if not script_path.exists():
+                    fatal(f"Script {script}.sh not found in {get_holohub_setup_scripts_dir()}")
+                try:
+                    relative_script_path = script_path.relative_to(HoloHubContainer.HOLOHUB_ROOT)
+                except ValueError:
+                    fatal(
+                        f"Script {script}.sh at {script_path} is not within {HoloHubContainer.HOLOHUB_ROOT}. "
+                        f"The HOLOHUB_SETUP_SCRIPTS_DIR environment variable must resolve to a subdirectory within the project scope."
+                    )
+                cmd = [
+                    self.DOCKER_EXE,
+                    "build",
+                    "--build-arg",
+                    "BUILDKIT_INLINE_CACHE=1",
+                    "--build-arg",
+                    f"BASE_IMAGE={img}",
+                    "--network=host",
+                    "--build-arg",
+                    f"SCRIPT={relative_script_path}",
+                    "-t",
+                    f"{img}-{script}",
+                    "-t",
+                    f"{img}",
+                    "-f",
+                    str(get_holohub_setup_scripts_dir() / "Dockerfile.util"),
+                    str(HoloHubContainer.HOLOHUB_ROOT),
+                ]
+                run_command(cmd, dry_run=self.dryrun)
 
     def run(
         self,
@@ -417,7 +527,7 @@ class HoloHubContainer:
         add_volumes = add_volumes or []
         extra_args = extra_args or []
 
-        cmd = [self.holoscan_docker_exe, "run"]
+        cmd = [self.DOCKER_EXE, "run"]
 
         cmd.extend(self.get_basic_args())
         cmd.extend(self.get_security_args(as_root))
@@ -435,6 +545,10 @@ class HoloHubContainer:
 
         if local_sdk_root or os.environ.get("HOLOSCAN_SDK_ROOT"):
             cmd.extend(self.get_local_sdk_options(local_sdk_root))
+
+        # Add default docker run arguments
+        if HoloHubContainer.DEFAULT_DOCKER_RUN_ARGS:
+            cmd.extend(shlex.split(HoloHubContainer.DEFAULT_DOCKER_RUN_ARGS))
 
         if docker_opts:
             cmd.extend(shlex.split(docker_opts))
@@ -473,9 +587,9 @@ class HoloHubContainer:
         args.extend(
             [
                 "-v",
-                f"{HoloHubContainer.HOLOHUB_ROOT}:/workspace/holohub",
+                f"{HoloHubContainer.HOLOHUB_ROOT}:/workspace/{self.WORKSPACE_NAME}",
                 "-w",
-                "/workspace/holohub",
+                f"/workspace/{self.WORKSPACE_NAME}",
             ]
         )
 
@@ -531,16 +645,25 @@ class HoloHubContainer:
 
     def get_environment_args(self) -> List[str]:
         """Environment variable arguments"""
-        return [
+        args = [
             "-e",
             "NVIDIA_DRIVER_CAPABILITIES=graphics,video,compute,utility,display",
             "-e",
-            "HOME=/workspace/holohub",
+            f"HOME=/workspace/{self.WORKSPACE_NAME}",
             "-e",
-            "CUPY_CACHE_DIR=/workspace/holohub/.cupy/kernel_cache",
+            f"CUPY_CACHE_DIR=/workspace/{self.WORKSPACE_NAME}/.cupy/kernel_cache",
             "-e",
             "HOLOHUB_BUILD_LOCAL=1",
         ]
+        # Pass CMAKE_BUILD_PARALLEL_LEVEL to container if set on host
+        cmake_parallel_level = os.environ.get("CMAKE_BUILD_PARALLEL_LEVEL")
+        if cmake_parallel_level:
+            args.extend(["-e", f"CMAKE_BUILD_PARALLEL_LEVEL={cmake_parallel_level}"])
+        # Pass HOLOHUB_PATH_PREFIX to container if set on host
+        holohub_path_prefix = os.environ.get("HOLOHUB_PATH_PREFIX")
+        if holohub_path_prefix:
+            args.extend(["-e", f"HOLOHUB_PATH_PREFIX={holohub_path_prefix}"])
+        return args
 
     def enable_x11_access(self) -> None:
         if (
@@ -593,13 +716,13 @@ class HoloHubContainer:
         self, local_sdk_root: Optional[Path], img: Optional[str] = None
     ) -> List[str]:
         """Get PYTHONPATH configuration"""
-        benchmarking_path = "/workspace/holohub/benchmarks/holoscan_flow_benchmarking"
+        benchmarking_path = f"/workspace/{self.WORKSPACE_NAME}/{self.BENCHMARKING_SUBDIR}"
 
         if local_sdk_root or os.environ.get("HOLOSCAN_SDK_ROOT"):
             sdk_dir = find_hsdk_build_rel_dir(local_sdk_root)
             sdk_paths = f"/workspace/holoscan-sdk/{sdk_dir}/python/lib:{benchmarking_path}"
         else:
-            sdk_paths = f"/opt/nvidia/holoscan/python/lib:{benchmarking_path}"
+            sdk_paths = f"{self.SDK_PATH}/python/lib:{benchmarking_path}"
         all_paths = []
         if img:
             image_pythonpath = get_image_pythonpath(img, self.dryrun)
@@ -631,10 +754,14 @@ class HoloHubContainer:
         docker_args.extend(self.ucx_args())
         docker_args.extend(self.get_device_cgroup_args())
         docker_args.extend(self.get_nvidia_runtime_args())
+        if HoloHubContainer.DEFAULT_DOCKER_RUN_ARGS:
+            docker_args.extend(shlex.split(HoloHubContainer.DEFAULT_DOCKER_RUN_ARGS))
         if docker_opts:
             docker_args.extend(shlex.split(docker_opts))
         project_name = self.project_metadata.get("project_name") if self.project_metadata else None
-        hostname = f"holohub-{project_name}" if project_name else "holohub"
+        hostname = (
+            f"{self.HOSTNAME_PREFIX}-{project_name}" if project_name else self.HOSTNAME_PREFIX
+        )
         docker_args.extend(["--hostname", hostname])
 
         devcontainer_options = docker_args_to_devcontainer_format(docker_args)

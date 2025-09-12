@@ -15,12 +15,12 @@
 
 FROM nvcr.io/nvidia/cuda:12.9.0-base-ubuntu24.04
 
+ARG BASE_SDK_VERSION
 # Install dependencies
 RUN apt-get update && apt-get install -y \
-    python3-dev \
+    # Need numpy for converting video to gxf entity
     python3-pip \
     python3-numpy \
-    pybind11-dev \
     cmake \
     git \
     ffmpeg \
@@ -39,9 +39,14 @@ RUN if [ $(uname -m) = "aarch64" ]; then ARCH=arm64; else ARCH=linux; fi \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cuda-nvcc-12-9 \
     cuda-nvrtc-dev-12-9 \
-    holoscan \
-    libnvinfer-dev \
-    libnvinfer-plugin-dev \
-    libnvonnxparsers-dev \
+    holoscan=${BASE_SDK_VERSION}.* \
+    libnvinfer-headers-dev=*cuda12.9* \
+    libnvinfer10=*cuda12.9* \
+    libnvinfer-dev=*cuda12.9* \
+    libnvinfer-headers-plugin-dev=*cuda12.9* \
+    libnvinfer-plugin10=*cuda12.9* \
+    libnvinfer-plugin-dev=*cuda12.9* \
+    libnvonnxparsers10=*cuda12.9* \
+    libnvonnxparsers-dev=*cuda12.9* \
     libnpp-dev-12-9 \
     && rm -rf /var/lib/apt/lists/*

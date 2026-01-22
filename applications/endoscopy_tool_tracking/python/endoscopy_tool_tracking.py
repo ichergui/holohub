@@ -93,7 +93,7 @@ class EndoscopyApp(Application):
         self.source = source
         self.postprocessor = postprocessor
         if data == "none":
-            data = os.environ.get("HOLOHUB_DATA_PATH", "../data")
+            data = os.environ.get("HOLOHUB_DATA_PATH", "data/endoscopy")
 
         self.sample_data_path = data
 

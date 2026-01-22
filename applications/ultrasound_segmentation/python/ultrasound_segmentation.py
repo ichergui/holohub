@@ -48,7 +48,7 @@ class UltrasoundApp(Application):
         self.source = source
 
         if data == "none":
-            data = os.environ.get("HOLOHUB_DATA_PATH", "../data")
+            data = os.environ.get("HOLOHUB_DATA_PATH", "data/ultrasound_segmentation")
 
         self.sample_data_path = data
 

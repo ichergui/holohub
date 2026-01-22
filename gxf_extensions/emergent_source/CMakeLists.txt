@@ -17,6 +17,10 @@ project(gxf_emergent_source)
 
 find_package(holoscan 0.5 REQUIRED CONFIG
              PATHS "/opt/nvidia/holoscan" "/workspace/holoscan-sdk/install")
+
+# Set the default Emergent SDK path
+set(EMERGENT_ROOT_DIR "/opt/EVT/eSDK" CACHE PATH "Emergent SDK directory")
+
 # Create library
 add_library(gxf_emergent_source_lib SHARED
   emergent_source.cpp
@@ -36,12 +40,12 @@ target_include_directories(gxf_emergent_source_lib
   SYSTEM
   BEFORE
   PUBLIC
-  "/opt/EVT/eSDK/include"
+  "${EMERGENT_ROOT_DIR}/include"
 )
 target_link_directories(gxf_emergent_source_lib
   BEFORE
   PUBLIC
-  "/opt/EVT/eSDK/lib/"
+  "${EMERGENT_ROOT_DIR}/lib/"
 )
 
 # Create extension

@@ -16,15 +16,7 @@
 # Find pybind11
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 
-# We fetch pybind11 since we need the same version as the Holoscan SDK
-# and it's not necessarily available on all the platforms
-include(FetchContent)
-FetchContent_Declare(pybind11
-  GIT_REPOSITORY https://github.com/pybind/pybind11
-  GIT_TAG v2.13.6
-  GIT_SHALLOW TRUE
-)
-FetchContent_MakeAvailable(pybind11)
+find_package(pybind11 2.11.1 REQUIRED)
 
 # Helper function to generate pybind11 operator modules
 function(pybind11_add_holohub_module)
@@ -68,9 +60,8 @@ function(pybind11_add_holohub_module)
         "\$ORIGIN/../lib" # in our python wheel"
     )
     list(JOIN _rpath ":" _rpath)
-    set_property(TARGET ${target_name}
-        APPEND PROPERTY BUILD_RPATH ${_rpath}
-    )
+    set_target_properties(${target_name} PROPERTIES INSTALL_RPATH ${_rpath})
+    set_target_properties(${target_name} PROPERTIES BUILD_WITH_INSTALL_RPATH ON)
     unset(_rpath)
 
     # make submodule folder

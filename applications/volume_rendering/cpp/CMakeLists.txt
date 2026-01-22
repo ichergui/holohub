@@ -18,6 +18,8 @@ project(volume_rendering)
 find_package(holoscan 1.0 REQUIRED CONFIG
              PATHS "/opt/nvidia/holoscan" "/workspace/holoscan-sdk/install")
 
+find_package(nlohmann_json REQUIRED)
+
 add_executable(volume_rendering
   json_loader.cpp
   volume_rendering.cpp

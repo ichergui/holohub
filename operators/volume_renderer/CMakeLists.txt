@@ -20,61 +20,9 @@ find_package(holoscan 0.6 REQUIRED CONFIG
 
 find_package(ZLIB REQUIRED)
 
-# we don't need the gRPC interface, OpenH264 and the examples
-set(CLARA_VIZ_WITH_GRPC OFF CACHE INTERNAL "")
-set(CLARA_VIZ_WITH_OPENH264 OFF CACHE INTERNAL "")
-set(CLARA_VIZ_WITH_EXAMPLES OFF CACHE INTERNAL "")
-
-# we are downloading large content, it's better to see the progress
-set(FETCHCONTENT_QUIET OFF)
-
-# Set CMP0135 policy to NEW to use time of extraction for files extracted by
-# FetchContent/ExternalProject_Add.
-# This ensures that anything that depends on the extracted contents will be rebuilt whenever
-# the URL changes.
-if(POLICY CMP0135)
-  cmake_policy(SET CMP0135 NEW)
-  set(CMAKE_POLICY_DEFAULT_CMP0135 NEW)
-endif()
-
-# set CMP0148 policy to OLD to allow FindCUDA to be used by ClaraViz
-if(POLICY CMP0146)
-  cmake_policy(SET CMP0146 OLD)
-  set(CMAKE_POLICY_DEFAULT_CMP0146 OLD)
-endif()
-
-set(_clara_viz_version "v0.4.2")
-include(FetchContent)
-FetchContent_Declare(
-    ClaraViz
-    URL https://github.com/NVIDIA/clara-viz/archive/refs/tags/${_clara_viz_version}.tar.gz
-    URL_MD5 79cff506c896eb9d1a0d5b742782e06b
-    )
-
-# enable CMP0077 to allow overwriting option() statements in FetchContent sub-projects
-cmake_policy(SET CMP0077 NEW)
-
-# Allowing FetchContent_Populate() for now
-# This should be updated when ClaraViz supports new version of CMake
-if(POLICY CMP0169)
-  cmake_policy(SET CMP0169 OLD)
-endif()
-
-FetchContent_GetProperties(ClaraViz)
-if(NOT claraviz_POPULATED)
-    FetchContent_Populate(ClaraViz)
-    set(CLARA_VIZ_PUBLIC_CMAKE_TOOLS_DIR "${claraviz_SOURCE_DIR}/cmake")
-    add_subdirectory(${claraviz_SOURCE_DIR}/thirdparty ${claraviz_BINARY_DIR}/thirdparty)
-    add_subdirectory(${claraviz_SOURCE_DIR}/src ${claraviz_BINARY_DIR}/src)
-endif()
-
-set(CLARA_VIZ_PUBLIC_CMAKE_TOOLS_DIR "${claraviz_SOURCE_DIR}/cmake")
-set(FETCHCONTENT_QUIET ON)
-
-find_package(clara_viz_renderer REQUIRED HINTS ${claraviz_SOURCE_DIR}/cmake)
-install(IMPORTED_RUNTIME_ARTIFACTS clara::viz::renderer
-  COMPONENT "volume_renderer"
-)
+find_package(claraviz REQUIRED)
+find_package(nlohmann_json REQUIRED)
+find_package(ZLIB REQUIRED)
 
 add_library(volume_renderer SHARED
   dataset.cpp

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <math.h>
 #include "dataset.hpp"
 
 #include <filesystem>

@@ -25,20 +25,14 @@ endif()
 include(FetchContent)
 FetchContent_Declare(
   Slang
-  URL https://github.com/shader-slang/slang/releases/download/v2025.14.3/slang-2025.14.3-linux-${CMAKE_SYSTEM_PROCESSOR}.tar.gz
+  URL https://github.com/shader-slang/slang/releases/download/v2025.14.3/slang-2025.14.3-linux-${SLANG_RUNTIME_TARGETS}.tar.gz
   DOWNLOAD_EXTRACT_TIMESTAMP TRUE
 )
 FetchContent_MakeAvailable(Slang)
 
 include(${slang_SOURCE_DIR}/cmake/slangConfig.cmake)
 
-# Fetch nlohmann_json
-FetchContent_Declare(
-  nlohmann_json
-  URL https://github.com/nlohmann/json/releases/download/v3.12.0/json.tar.xz
-  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-)
-FetchContent_MakeAvailable(nlohmann_json)
+find_package(nlohmann_json REQUIRED)
 
 # Add slang_shader operator
 add_library(slang_shader SHARED

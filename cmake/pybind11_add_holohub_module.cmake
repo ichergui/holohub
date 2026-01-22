@@ -27,6 +27,7 @@ function(pybind11_add_holohub_module)
         ${ARGN}
     )
 
+    set(_Python Python3 CACHE INTERNAL "" FORCE)
     set(MODULE_NAME ${MODULE_CPP_CMAKE_TARGET})
     set(target_name ${MODULE_NAME}_python)
     pybind11_add_module(${target_name} MODULE ${MODULE_SOURCES})

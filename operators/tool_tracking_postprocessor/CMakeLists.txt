@@ -16,6 +16,10 @@ cmake_minimum_required(VERSION 3.24)
 
 project(tool_tracking_postprocessor LANGUAGES CXX CUDA)
 
+find_package(nvtx3 3.3.0 REQUIRED)
+find_package(rapids_logger 0.2.0 REQUIRED)
+find_package(rmm 25.10.0 REQUIRED)
+find_package(Eigen3 REQUIRED)
 find_package(holoscan REQUIRED CONFIG
              PATHS "/opt/nvidia/holoscan" "/workspace/holoscan-sdk/install")
 

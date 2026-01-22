@@ -14,6 +14,8 @@
 # limitations under the License.
 
 project(xr)
+find_package(rapids_logger 0.2.0 REQUIRED)
+find_package(rmm 25.10.0 REQUIRED)
 find_package(holoscan 3.0 REQUIRED CONFIG
              PATHS "/opt/nvidia/holoscan" "/workspace/holoscan-sdk/install")
 find_package(Vulkan REQUIRED)

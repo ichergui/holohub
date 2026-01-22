@@ -102,14 +102,6 @@ if(HOLOHUB_DOWNLOAD_DATASETS)
     GXF_ENTITIES_FRAMERATE 30
   )
   add_dependencies(object_detection_torch object_detection_torch_data)
-
-  # Download the model
-  add_custom_target(download_model
-    COMMAND python3 "${CMAKE_CURRENT_SOURCE_DIR}/generate_resnet_model.py"  "${HOLOHUB_DATA_DIR}/object_detection_torch/frcnn_resnet50_t.pt"
-    DEPENDS object_detection_torch_data
-    BYPRODUCTS "${HOLOHUB_DATA_DIR}/object_detection_torch/frcnn_resnet50_t.pt"
-  )
-  add_dependencies(object_detection_torch download_model)
 endif()
 
 # Copy config file

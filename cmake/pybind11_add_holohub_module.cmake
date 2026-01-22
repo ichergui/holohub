@@ -89,4 +89,9 @@ function(pybind11_add_holohub_module)
         OUTPUT_NAME _${MODULE_NAME}
     )
 
+    # Install the module
+    install(DIRECTORY ${CMAKE_SUBMODULE_OUT_DIR}
+        DESTINATION python/${CMAKE_INSTALL_LIBDIR}/holohub
+    )
+
 endfunction()

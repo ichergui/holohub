@@ -47,6 +47,15 @@ add_custom_target(high_speed_endoscopy_yaml
 )
 add_dependencies(high_speed_endoscopy high_speed_endoscopy_yaml)
 
+# Install the application
+file(RELATIVE_PATH install_path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+install(TARGETS high_speed_endoscopy
+  DESTINATION ${install_path}
+)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/high_speed_endoscopy.yaml
+  DESTINATION ${install_path}
+)
+
 # Add testing
 if(BUILD_TESTING)
   # Warning: this test just check that the application starts if there is no camera

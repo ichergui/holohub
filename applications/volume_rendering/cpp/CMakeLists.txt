@@ -55,3 +55,9 @@ if(BUILD_TESTING)
   set_tests_properties(volume_rendering_test PROPERTIES
                        PASS_REGULAR_EXPRESSION "Application has finished running.")
 endif()
+
+# Install the application
+file(RELATIVE_PATH install_path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+install(TARGETS volume_rendering
+  DESTINATION ${install_path}
+)

@@ -56,6 +56,15 @@ add_custom_target(endoscopy_tool_tracking_deps
 )
 add_dependencies(endoscopy_tool_tracking endoscopy_tool_tracking_deps)
 
+# Install the application
+file(RELATIVE_PATH install_path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+install(TARGETS endoscopy_tool_tracking
+  DESTINATION ${install_path}
+)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/endoscopy_tool_tracking.yaml
+  DESTINATION ${install_path}
+)
+
 # Add testing
 if(BUILD_TESTING)
 

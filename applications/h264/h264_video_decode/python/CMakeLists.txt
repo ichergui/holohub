@@ -17,6 +17,14 @@ cmake_minimum_required(VERSION 3.20)
 find_package(holoscan 3.6.1 REQUIRED CONFIG
              PATHS "/opt/nvidia/holoscan" "/workspace/holoscan-sdk/install")
 
+# Install the application
+file(RELATIVE_PATH install_path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/h264_video_decode.py
+  ${CMAKE_CURRENT_SOURCE_DIR}/h264_video_decode.yaml
+  DESTINATION ${install_path}
+)
+
 # Add testing
 if(BUILD_TESTING)
   add_test(NAME h264_video_decode_python_test

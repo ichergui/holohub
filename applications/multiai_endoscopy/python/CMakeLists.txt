@@ -13,6 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Install the application
+file(RELATIVE_PATH install_path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/multi_ai.py
+  ${CMAKE_CURRENT_SOURCE_DIR}/multi_ai.yaml
+  ${CMAKE_CURRENT_SOURCE_DIR}/endo_ref_data_labels.csv
+  DESTINATION ${install_path}
+)
+
 # Add testing
 if(BUILD_TESTING)
 

@@ -42,6 +42,15 @@ add_custom_target(endoscopy_out_of_body_detection_yaml
 )
 add_dependencies(endoscopy_out_of_body_detection endoscopy_out_of_body_detection_yaml)
 
+# Install the application
+file(RELATIVE_PATH install_path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+install(TARGETS endoscopy_out_of_body_detection
+  DESTINATION ${install_path}
+)
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/../endoscopy_out_of_body_detection.yaml"
+  DESTINATION ${install_path}
+)
+
 # Add testing
 if(BUILD_TESTING)
   # Configure the yaml file to only play 10 frames

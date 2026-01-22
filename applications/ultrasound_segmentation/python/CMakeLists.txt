@@ -13,6 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Install the application
+file(RELATIVE_PATH install_path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/ultrasound_segmentation.py
+  ${CMAKE_CURRENT_SOURCE_DIR}/ultrasound_segmentation.yaml
+  DESTINATION ${install_path}
+)
+
 # Add testing
 if(BUILD_TESTING)
   # To get the environment path

@@ -27,6 +27,14 @@ target_link_libraries(h264_endoscopy_tool_tracking_python
   holoscan::ops::tensor_to_video_buffer
   holoscan::ops::tool_tracking_postprocessor)
 
+# Install the application
+file(RELATIVE_PATH install_path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/h264_endoscopy_tool_tracking.py
+  ${CMAKE_CURRENT_SOURCE_DIR}/h264_endoscopy_tool_tracking.yaml
+  DESTINATION ${install_path}
+)
+
 # Add testing
 if(BUILD_TESTING)
   add_test(NAME h264_endoscopy_tool_tracking_python_test

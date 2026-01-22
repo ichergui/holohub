@@ -50,6 +50,15 @@ if(HOLOHUB_DOWNLOAD_DATASETS)
   add_dependencies(h264_video_decode endoscopy_data)
 endif()
 
+# Install the application
+file(RELATIVE_PATH install_path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+install(TARGETS h264_video_decode
+  DESTINATION ${install_path}
+)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/h264_video_decode.yaml
+  DESTINATION ${install_path}
+)
+
 # Add testing
 if(BUILD_TESTING)
   add_test(NAME h264_video_decode_cpp_test

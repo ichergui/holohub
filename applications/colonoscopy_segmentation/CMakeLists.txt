@@ -34,6 +34,14 @@ if(HOLOHUB_DOWNLOAD_DATASETS)
     )
 endif()
 
+# Install the application
+file(RELATIVE_PATH install_path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/colonoscopy_segmentation.py
+  ${CMAKE_CURRENT_SOURCE_DIR}/colonoscopy_segmentation.yaml
+  DESTINATION ${install_path}
+)
+
 # Add testing
 if(BUILD_TESTING)
 

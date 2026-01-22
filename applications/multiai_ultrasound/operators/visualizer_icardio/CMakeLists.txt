@@ -41,6 +41,8 @@ endif()
 
 target_include_directories(visualizer_icardio INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
+install(TARGETS visualizer_icardio)
+
 if(HOLOHUB_BUILD_PYTHON)
     add_subdirectory(python)
 endif()

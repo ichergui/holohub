@@ -36,6 +36,8 @@ PRIVATE
   CUDA::nppicc
 )
 
+install(TARGETS orsi_format_converter)
+
 if(HOLOHUB_BUILD_PYTHON)
   add_subdirectory(python)
 endif()

@@ -31,6 +31,8 @@ target_link_libraries(
   holoscan::core
 )
 
+install(TARGETS tensor_to_video_buffer)
+
 if(HOLOHUB_BUILD_PYTHON)
     add_subdirectory(python)
 endif()

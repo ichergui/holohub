@@ -57,6 +57,15 @@ if(HOLOHUB_DOWNLOAD_DATASETS)
   add_dependencies(h264_endoscopy_tool_tracking endoscopy_data)
 endif()
 
+# Install the application
+file(RELATIVE_PATH install_path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+install(TARGETS h264_endoscopy_tool_tracking
+  DESTINATION ${install_path}
+)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/h264_endoscopy_tool_tracking.yaml
+  DESTINATION ${install_path}
+)
+
 # Add testing
 if(BUILD_TESTING)
   add_test(NAME h264_endoscopy_tool_tracking_cpp_test

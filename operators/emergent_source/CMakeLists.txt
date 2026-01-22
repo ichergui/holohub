@@ -27,6 +27,8 @@ target_include_directories(emergent_source INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
 
 target_link_libraries(emergent_source holoscan::core)
 
+install(TARGETS emergent_source)
+
 if(HOLOHUB_BUILD_PYTHON)
     add_subdirectory(python)
 endif()

@@ -129,6 +129,15 @@ add_custom_target(object_detection_torch_yaml
 )
 add_dependencies(object_detection_torch object_detection_torch_yaml)
 
+# Install the application
+file(RELATIVE_PATH install_path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+install(TARGETS object_detection_torch
+  DESTINATION ${install_path}
+)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/object_detection_torch.yaml
+  DESTINATION ${install_path}
+)
+
 # Add testing
 if(BUILD_TESTING)
 

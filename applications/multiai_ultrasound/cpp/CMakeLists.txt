@@ -56,6 +56,17 @@ add_custom_target(mgpu_multiai_ultrasound_yaml
 )
 add_dependencies(multiai_ultrasound mgpu_multiai_ultrasound_yaml)
 
+# Install the application
+file(RELATIVE_PATH install_path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+install(TARGETS multiai_ultrasound
+  DESTINATION ${install_path}
+)
+install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/multiai_ultrasound.yaml
+    ${CMAKE_CURRENT_SOURCE_DIR}/mgpu_multiai_ultrasound.yaml
+  DESTINATION ${install_path}
+)
+
 # Add testing
 if(BUILD_TESTING)
   set(RECORDING_DIR ${CMAKE_CURRENT_BINARY_DIR}/recording_output)

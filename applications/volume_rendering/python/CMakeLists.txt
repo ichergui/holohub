@@ -51,3 +51,10 @@ if(BUILD_TESTING)
   set_tests_properties(volume_rendering_python_test PROPERTIES
                        PASS_REGULAR_EXPRESSION "Application has finished running.")
 endif()
+
+# Install the application
+file(RELATIVE_PATH install_path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/volume_rendering.py
+  DESTINATION ${install_path}
+)

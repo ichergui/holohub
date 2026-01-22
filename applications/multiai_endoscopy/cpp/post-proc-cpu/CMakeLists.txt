@@ -49,6 +49,16 @@ add_custom_target(app_config_yaml
 )
 add_dependencies(multiai_endoscopy app_config_yaml)
 
+# Install the application
+file(RELATIVE_PATH install_path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+install(TARGETS multiai_endoscopy
+  DESTINATION ${install_path}
+)
+install(FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/app_config.yaml
+  DESTINATION ${install_path}
+)
+
 # Add testing
 if(BUILD_TESTING)
 

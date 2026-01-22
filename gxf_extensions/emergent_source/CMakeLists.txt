@@ -51,3 +51,5 @@ add_library(gxf_emergent_source SHARED
 target_link_libraries(gxf_emergent_source
   PUBLIC gxf_emergent_source_lib
 )
+
+install(TARGETS gxf_emergent_source_lib gxf_emergent_source)

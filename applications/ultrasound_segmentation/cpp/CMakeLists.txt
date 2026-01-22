@@ -47,6 +47,15 @@ add_custom_target(ultrasound_segmentation_yaml
 )
 add_dependencies(ultrasound_segmentation ultrasound_segmentation_yaml)
 
+# Install the application
+file(RELATIVE_PATH install_path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+install(TARGETS ultrasound_segmentation
+  DESTINATION ${install_path}
+)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/ultrasound_segmentation.yaml
+  DESTINATION ${install_path}
+)
+
 # Add testing
 if(BUILD_TESTING)
 

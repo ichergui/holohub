@@ -32,3 +32,5 @@ target_link_libraries(video_encoder INTERFACE video_encoder_request
 add_library(holoscan::ops::video_encoder ALIAS video_encoder)
 
 target_include_directories(video_encoder INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
+install(TARGETS video_encoder)

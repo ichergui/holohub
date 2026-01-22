@@ -31,6 +31,14 @@ add_custom_target(python_endoscopy_tool_tracking_deps
 
 add_dependencies(python_endoscopy_tool_tracking python_endoscopy_tool_tracking_deps)
 
+# Install the application
+file(RELATIVE_PATH install_path ${CMAKE_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR})
+install(FILES
+  ${CMAKE_CURRENT_SOURCE_DIR}/endoscopy_tool_tracking.py
+  ${CMAKE_CURRENT_SOURCE_DIR}/endoscopy_tool_tracking.yaml
+  DESTINATION ${install_path}
+)
+
 # Add testing
 if(BUILD_TESTING)
   # To get the environment path

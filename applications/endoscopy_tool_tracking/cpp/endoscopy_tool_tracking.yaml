@@ -29,9 +29,9 @@ resources:
   gpuMemory: 1Gi
 
 extensions:
-  - lib/gxf_extensions/libgxf_lstm_tensor_rt_inference.so
+  - libgxf_lstm_tensor_rt_inference.so
 # Uncomment the following extension when using yuan as source
-#  - lib/gxf_extensions/libgxf_qcap_source.so
+#  - libgxf_qcap_source.so
 
 source: "replayer"    # "replayer" or "aja" or "deltacast" or "yuan"
 postprocessor: "tool_tracking_postprocessor" # "slang_shader" or "tool_tracking_postprocessor"

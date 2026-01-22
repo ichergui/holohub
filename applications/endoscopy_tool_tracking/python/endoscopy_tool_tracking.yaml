@@ -29,9 +29,9 @@ resources:
   gpuMemory: 1Gi
 
 extensions:
-- lib/gxf_extensions/libgxf_lstm_tensor_rt_inference.so
-# - lib/gxf_extensions/libgxf_videomaster.so
-# - lib/gxf_extensions/libgxf_qcap_source.so
+- libgxf_lstm_tensor_rt_inference.so
+# - libgxf_videomaster.so
+# - libgxf_qcap_source.so
 
 visualizer: "holoviz" # "holoviz" or "vtk"
 

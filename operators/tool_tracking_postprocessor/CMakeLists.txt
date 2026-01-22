@@ -30,8 +30,6 @@ set_target_properties(tool_tracking_postprocessor
   PROPERTIES
     # separable compilation is required since we launch kernels from within kernels
     CUDA_SEPARABLE_COMPILATION ON
-    # compile for the architecture of the current GPU
-    CUDA_ARCHITECTURES "native"
   )
 
 target_link_libraries(tool_tracking_postprocessor
